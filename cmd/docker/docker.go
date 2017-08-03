@@ -164,7 +164,6 @@ func main() {
 
 	dockerCli := command.NewDockerCli(stdin, stdout, stderr)
 	cmd := newDockerCommand(dockerCli)
-
 	if err := cmd.Execute(); err != nil {
 		if sterr, ok := err.(cli.StatusError); ok {
 			if sterr.Status != "" {

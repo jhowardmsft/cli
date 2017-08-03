@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"path"
 	"sort"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/docker/notary/client"
 	"github.com/docker/notary/tuf/data"
 	"github.com/opencontainers/go-digest"
+	specs "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
@@ -217,7 +219,7 @@ func imagePushPrivileged(ctx context.Context, cli command.Cli, authConfig types.
 }
 
 // trustedPull handles content trust pulling of an image
-func trustedPull(ctx context.Context, cli command.Cli, repoInfo *registry.RepositoryInfo, ref reference.Named, authConfig types.AuthConfig, requestPrivilege types.RequestPrivilegeFunc) error {
+func trustedPull(ctx context.Context, cli command.Cli, repoInfo *registry.RepositoryInfo, ref reference.Named, authConfig types.AuthConfig, requestPrivilege types.RequestPrivilegeFunc, platform specs.Platform) error {
 	var refs []target
 
 	notaryRepo, err := trust.GetNotaryRepository(cli, repoInfo, authConfig, "pull")
@@ -279,7 +281,7 @@ func trustedPull(ctx context.Context, cli command.Cli, repoInfo *registry.Reposi
 		if err != nil {
 			return err
 		}
-		if err := imagePullPrivileged(ctx, cli, authConfig, reference.FamiliarString(trustedRef), requestPrivilege, false); err != nil {
+		if err := imagePullPrivileged(ctx, cli, authConfig, reference.FamiliarString(trustedRef), requestPrivilege, false, platform); err != nil {
 			return err
 		}
 
@@ -296,7 +298,10 @@ func trustedPull(ctx context.Context, cli command.Cli, repoInfo *registry.Reposi
 }
 
 // imagePullPrivileged pulls the image and displays it to the output
-func imagePullPrivileged(ctx context.Context, cli command.Cli, authConfig types.AuthConfig, ref string, requestPrivilege types.RequestPrivilegeFunc, all bool) error {
+func imagePullPrivileged(ctx context.Context, cli command.Cli, authConfig types.AuthConfig, ref string, requestPrivilege types.RequestPrivilegeFunc, all bool, platform specs.Platform) error {
+	if platform.OS == "" && os.Getenv("DOCKER_DEFAULT_PLATFORM") != "" {
+		platform.OS = os.Getenv("DOCKER_DEFAULT_PLATFORM")
+	}
 
 	encodedAuth, err := command.EncodeAuthToBase64(authConfig)
 	if err != nil {
@@ -306,8 +311,8 @@ func imagePullPrivileged(ctx context.Context, cli command.Cli, authConfig types.
 		RegistryAuth:  encodedAuth,
 		PrivilegeFunc: requestPrivilege,
 		All:           all,
+		Platform:      platform,
 	}
-
 	responseBody, err := cli.Client().ImagePull(ctx, ref, options)
 	if err != nil {
 		return err

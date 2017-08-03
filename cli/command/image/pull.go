@@ -7,6 +7,7 @@ import (
 	"github.com/docker/cli/cli"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/distribution/reference"
+	"github.com/docker/docker/pkg/system"
 	"github.com/docker/docker/registry"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -14,8 +15,9 @@ import (
 )
 
 type pullOptions struct {
-	remote string
-	all    bool
+	remote   string
+	all      bool
+	platform string
 }
 
 // NewPullCommand creates a new `docker pull` command
@@ -35,12 +37,18 @@ func NewPullCommand(dockerCli command.Cli) *cobra.Command {
 	flags := cmd.Flags()
 
 	flags.BoolVarP(&opts.all, "all-tags", "a", false, "Download all tagged images in the repository")
+
+	flags.StringVar(&opts.platform, "platform", "", "Set platform if server is multi-platform capable")
+	flags.SetAnnotation("platform", "version", []string{"1.32"})
+
 	command.AddTrustVerificationFlags(flags)
 
 	return cmd
 }
 
 func runPull(dockerCli command.Cli, opts pullOptions) error {
+	ociPlatform := system.ParsePlatform(opts.platform)
+
 	distributionRef, err := reference.ParseNormalizedNamed(opts.remote)
 	if err != nil {
 		return err
@@ -70,9 +78,9 @@ func runPull(dockerCli command.Cli, opts pullOptions) error {
 	// Check if reference has a digest
 	_, isCanonical := distributionRef.(reference.Canonical)
 	if command.IsTrusted() && !isCanonical {
-		err = trustedPull(ctx, dockerCli, repoInfo, distributionRef, authConfig, requestPrivilege)
+		err = trustedPull(ctx, dockerCli, repoInfo, distributionRef, authConfig, requestPrivilege, *ociPlatform)
 	} else {
-		err = imagePullPrivileged(ctx, dockerCli, authConfig, reference.FamiliarString(distributionRef), requestPrivilege, opts.all)
+		err = imagePullPrivileged(ctx, dockerCli, authConfig, reference.FamiliarString(distributionRef), requestPrivilege, opts.all, *ociPlatform)
 	}
 	if err != nil {
 		if strings.Contains(err.Error(), "when fetching 'plugin'") {

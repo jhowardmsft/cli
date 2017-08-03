@@ -42,5 +42,6 @@ func NewContainerCommand(dockerCli *command.DockerCli) *cobra.Command {
 		newInspectCommand(dockerCli),
 		NewPruneCommand(dockerCli),
 	)
+
 	return cmd
 }
