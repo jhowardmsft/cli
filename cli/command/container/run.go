@@ -30,6 +30,7 @@ type runOptions struct {
 	sigProxy   bool
 	name       string
 	detachKeys string
+	platform   string
 }
 
 // NewRunCommand create a new `docker run` command
@@ -58,6 +59,8 @@ func NewRunCommand(dockerCli *command.DockerCli) *cobra.Command {
 	flags.BoolVar(&opts.sigProxy, "sig-proxy", true, "Proxy received signals to the process")
 	flags.StringVar(&opts.name, "name", "", "Assign a name to the container")
 	flags.StringVar(&opts.detachKeys, "detach-keys", "", "Override the key sequence for detaching a container")
+	flags.StringVar(&opts.platform, "platform", "", "Set platform if server is multi-platform capable")
+	flags.SetAnnotation("platform", "version", []string{"1.32"})
 
 	// Add an explicit help that doesn't have a `-h` to prevent the conflict
 	// with hostname
@@ -161,7 +164,10 @@ func runContainer(dockerCli *command.DockerCli, opts *runOptions, copts *contain
 
 	ctx, cancelFun := context.WithCancel(context.Background())
 
-	createResponse, err := createContainer(ctx, dockerCli, containerConfig, opts.name)
+	if opts.platform == "" && os.Getenv("DOCKER_DEFAULT_PLATFORM") != "" {
+		opts.platform = os.Getenv("DOCKER_DEFAULT_PLATFORM")
+	}
+	createResponse, err := createContainer(ctx, dockerCli, containerConfig, opts.name, opts.platform)
 	if err != nil {
 		reportError(stderr, cmdPath, err.Error(), true)
 		return runStartContainerErr(err)
