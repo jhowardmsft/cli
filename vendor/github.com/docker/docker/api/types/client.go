@@ -196,6 +196,7 @@ type ImageBuildResponse struct {
 // ImageCreateOptions holds information to create images.
 type ImageCreateOptions struct {
 	RegistryAuth string // RegistryAuth is the base64 encoded credentials for the registry
+	Platform     string
 }
 
 // ImageImportSource holds source information for ImageImport
@@ -229,6 +230,7 @@ type ImagePullOptions struct {
 	All           bool
 	RegistryAuth  string // RegistryAuth is the base64 encoded credentials for the registry
 	PrivilegeFunc RequestPrivilegeFunc
+	Platform      string
 }
 
 // RequestPrivilegeFunc is a function interface that

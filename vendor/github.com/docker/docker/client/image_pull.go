@@ -31,6 +31,13 @@ func (cli *Client) ImagePull(ctx context.Context, refStr string, options types.I
 		query.Set("tag", getAPITagFromNamedRef(ref))
 	}
 
+	if options.Platform != "" {
+		if err := cli.NewVersionError("1.32", "platform"); err != nil {
+			return nil, err
+		}
+		query.Set("platform", options.Platform)
+	}
+
 	resp, err := cli.tryImageCreate(ctx, query, options.RegistryAuth)
 	if resp.statusCode == http.StatusUnauthorized && options.PrivilegeFunc != nil {
 		newAuthHeader, privilegeErr := options.PrivilegeFunc()

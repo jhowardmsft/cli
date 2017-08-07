@@ -21,6 +21,12 @@ func (cli *Client) ImageCreate(ctx context.Context, parentReference string, opti
 	query := url.Values{}
 	query.Set("fromImage", reference.FamiliarName(ref))
 	query.Set("tag", getAPITagFromNamedRef(ref))
+	if options.Platform != "" {
+		if err := cli.NewVersionError("1.32", "platform"); err != nil {
+			return nil, err
+		}
+		query.Set("platform", options.Platform)
+	}
 	resp, err := cli.tryImageCreate(ctx, query, options.RegistryAuth)
 	if err != nil {
 		return nil, err
