@@ -38,6 +38,7 @@ func newConfigCreateCommand(dockerCli command.Cli) *cobra.Command {
 	}
 	flags := cmd.Flags()
 	flags.VarP(&createOpts.labels, "label", "l", "Config labels")
+
 	return cmd
 }
 

@@ -17,7 +17,6 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/pkg/promise"
 	"github.com/docker/docker/pkg/signal"
-	"github.com/docker/docker/pkg/system"
 	"github.com/docker/docker/pkg/term"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -128,7 +127,6 @@ func runContainer(dockerCli *command.DockerCli, opts *runOptions, copts *contain
 	hostConfig := containerConfig.HostConfig
 	stdout, stderr := dockerCli.Out(), dockerCli.Err()
 	client := dockerCli.Client()
-	ociPlatform := system.ParsePlatform(opts.platform)
 
 	// TODO: pass this as an argument
 	cmdPath := "run"
@@ -171,7 +169,7 @@ func runContainer(dockerCli *command.DockerCli, opts *runOptions, copts *contain
 	//		opts.platform.OS = os.Getenv("DOCKER_DEFAULT_PLATFORM")
 	//	}
 
-	createResponse, err := createContainer(ctx, dockerCli, containerConfig, opts.name, *ociPlatform)
+	createResponse, err := createContainer(ctx, dockerCli, containerConfig, opts.name, opts.platform)
 	if err != nil {
 		reportError(stderr, cmdPath, err.Error(), true)
 		return runStartContainerErr(err)

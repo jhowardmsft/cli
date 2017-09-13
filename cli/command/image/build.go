@@ -25,7 +25,6 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/progress"
 	"github.com/docker/docker/pkg/streamformatter"
-	"github.com/docker/docker/pkg/system"
 	"github.com/docker/docker/pkg/urlutil"
 	units "github.com/docker/go-units"
 	"github.com/pkg/errors"
@@ -181,8 +180,6 @@ func runBuild(dockerCli command.Cli, options buildOptions) error {
 		buildBuff     io.Writer
 		remote        string
 	)
-
-	ociPlatform := system.ParsePlatform(options.platform)
 
 	if options.dockerfileFromStdin() {
 		if options.contextFromStdin() {
@@ -381,7 +378,7 @@ func runBuild(dockerCli command.Cli, options buildOptions) error {
 		ExtraHosts:     options.extraHosts.GetAll(),
 		Target:         options.target,
 		RemoteContext:  remote,
-		Platform:       *ociPlatform,
+		Platform:       options.platform,
 	}
 
 	if s != nil {

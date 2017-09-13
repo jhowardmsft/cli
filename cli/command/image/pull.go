@@ -7,7 +7,6 @@ import (
 	"github.com/docker/cli/cli"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/distribution/reference"
-	"github.com/docker/docker/pkg/system"
 	"github.com/docker/docker/registry"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -47,8 +46,6 @@ func NewPullCommand(dockerCli command.Cli) *cobra.Command {
 }
 
 func runPull(dockerCli command.Cli, opts pullOptions) error {
-	ociPlatform := system.ParsePlatform(opts.platform)
-
 	distributionRef, err := reference.ParseNormalizedNamed(opts.remote)
 	if err != nil {
 		return err
@@ -78,9 +75,9 @@ func runPull(dockerCli command.Cli, opts pullOptions) error {
 	// Check if reference has a digest
 	_, isCanonical := distributionRef.(reference.Canonical)
 	if command.IsTrusted() && !isCanonical {
-		err = trustedPull(ctx, dockerCli, repoInfo, distributionRef, authConfig, requestPrivilege, *ociPlatform)
+		err = trustedPull(ctx, dockerCli, repoInfo, distributionRef, authConfig, requestPrivilege, opts.platform)
 	} else {
-		err = imagePullPrivileged(ctx, dockerCli, authConfig, reference.FamiliarString(distributionRef), requestPrivilege, opts.all, *ociPlatform)
+		err = imagePullPrivileged(ctx, dockerCli, authConfig, reference.FamiliarString(distributionRef), requestPrivilege, opts.all, opts.platform)
 	}
 	if err != nil {
 		if strings.Contains(err.Error(), "when fetching 'plugin'") {

@@ -13,9 +13,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	apiclient "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
-	"github.com/docker/docker/pkg/system"
 	"github.com/docker/docker/registry"
-	specs "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -68,9 +66,7 @@ func runCreate(dockerCli command.Cli, flags *pflag.FlagSet, opts *createOptions,
 		reportError(dockerCli.Err(), "create", err.Error(), true)
 		return cli.StatusError{StatusCode: 125}
 	}
-	ociPlatform := system.ParsePlatform(opts.platform)
-
-	response, err := createContainer(context.Background(), dockerCli, containerConfig, opts.name, *ociPlatform)
+	response, err := createContainer(context.Background(), dockerCli, containerConfig, opts.name, opts.platform)
 	if err != nil {
 		return err
 	}
@@ -78,7 +74,7 @@ func runCreate(dockerCli command.Cli, flags *pflag.FlagSet, opts *createOptions,
 	return nil
 }
 
-func pullImage(ctx context.Context, dockerCli command.Cli, image string, platform specs.Platform, out io.Writer) error {
+func pullImage(ctx context.Context, dockerCli command.Cli, image string, platform string, out io.Writer) error {
 	ref, err := reference.ParseNormalizedNamed(image)
 	if err != nil {
 		return err
@@ -96,8 +92,8 @@ func pullImage(ctx context.Context, dockerCli command.Cli, image string, platfor
 		return err
 	}
 
-	if platform.OS == "" && os.Getenv("DOCKER_DEFAULT_PLATFORM") != "" {
-		platform.OS = os.Getenv("DOCKER_DEFAULT_PLATFORM")
+	if platform == "" && os.Getenv("DOCKER_DEFAULT_PLATFORM") != "" {
+		platform = os.Getenv("DOCKER_DEFAULT_PLATFORM")
 	}
 
 	options := types.ImageCreateOptions{
@@ -168,7 +164,7 @@ func newCIDFile(path string) (*cidFile, error) {
 	return &cidFile{path: path, file: f}, nil
 }
 
-func createContainer(ctx context.Context, dockerCli command.Cli, containerConfig *containerConfig, name string, platform specs.Platform) (*container.ContainerCreateCreatedBody, error) {
+func createContainer(ctx context.Context, dockerCli command.Cli, containerConfig *containerConfig, name string, platform string) (*container.ContainerCreateCreatedBody, error) {
 	config := containerConfig.Config
 	hostConfig := containerConfig.HostConfig
 	networkingConfig := containerConfig.NetworkingConfig
