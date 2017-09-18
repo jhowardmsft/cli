@@ -179,10 +179,7 @@ type ImageBuildOptions struct {
 	ExtraHosts  []string // List of extra hosts
 	Target      string
 	SessionID   string
-
-	// TODO @jhowardmsft LCOW Support: This will require extending to include
-	// `Platform string`, but is omitted for now as it's hard-coded temporarily
-	// to avoid API changes.
+	Platform    string
 }
 
 // ImageBuildResponse holds information
@@ -195,7 +192,8 @@ type ImageBuildResponse struct {
 
 // ImageCreateOptions holds information to create images.
 type ImageCreateOptions struct {
-	RegistryAuth string // RegistryAuth is the base64 encoded credentials for the registry
+	RegistryAuth string // RegistryAuth is the base64 encoded credentials for the registry.
+	Platform     string // Platform is the target platform of the image if it needs to be pulled from the registry.
 }
 
 // ImageImportSource holds source information for ImageImport
@@ -229,6 +227,7 @@ type ImagePullOptions struct {
 	All           bool
 	RegistryAuth  string // RegistryAuth is the base64 encoded credentials for the registry
 	PrivilegeFunc RequestPrivilegeFunc
+	Platform      string
 }
 
 // RequestPrivilegeFunc is a function interface that
